@@ -1,0 +1,65 @@
+$FolderPath = "./TestFiles"
+$BaselineFile = "./baseline.json"
+
+function Create-Baseline {
+    $hashes = @{}
+
+    Get-ChildItem -Path $FolderPath -File | ForEach-Object {
+        $hash = Get-FileHash -Path $_.FullName -Algorithm SHA256
+        $hashes[$_.Name] = $hash.Hash
+    }
+
+    $hashes | ConvertTo-Json | Set-Content $BaselineFile
+    Write-Host "Baseline created successfully."
+}
+
+function Check-Files {
+    if (!(Test-Path $BaselineFile)) {
+        Write-Host "No baseline found. Choose option 1 first."
+        return
+    }
+
+    $baseline = Get-Content $BaselineFile | ConvertFrom-Json
+    $baselineHashTable = @{}
+
+    $baseline.PSObject.Properties | ForEach-Object {
+        $baselineHashTable[$_.Name] = $_.Value
+    }
+
+    $currentFiles = Get-ChildItem -Path $FolderPath -File
+
+    foreach ($file in $currentFiles) {
+        $currentHash = (Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash
+
+        if (!$baselineHashTable.ContainsKey($file.Name)) {
+            Write-Host "New file detected: $($file.Name)"
+        }
+        elseif ($baselineHashTable[$file.Name] -ne $currentHash) {
+            Write-Host "Modified file detected: $($file.Name)"
+        }
+        else {
+            Write-Host "Unchanged: $($file.Name)"
+        }
+    }
+
+    foreach ($savedFile in $baselineHashTable.Keys) {
+        if (!(Test-Path "$FolderPath/$savedFile")) {
+            Write-Host "Deleted file detected: $savedFile"
+        }
+    }
+}
+
+Write-Host ""
+Write-Host "File Integrity Monitor"
+Write-Host "1 = Create Baseline"
+Write-Host "2 = Check Files"
+Write-Host "3 = Exit"
+
+$choice = Read-Host "Choose an option"
+
+switch ($choice) {
+    "1" { Create-Baseline }
+    "2" { Check-Files }
+    "3" { Write-Host "Goodbye." }
+    default { Write-Host "Invalid option." }
+}
