@@ -21,7 +21,7 @@ I built this project to practice PowerShell scripting, file monitoring, and basi
 - Detects deleted files
 
 ## Demo Video
-[Watch the demo on YouTube](https://youtu.be/25t1ZxAUd6I)
+[Watch the demo on YouTube]( https://youtu.be/vt55GoT47YE )
 
 ## How to Run the Project
 
